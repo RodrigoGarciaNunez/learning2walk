@@ -12,11 +12,14 @@ add_executable(main src/main.cpp)
 add_library(engine
     src/engine/mujoco_engine.cpp
     src/engine/view/mujoco_view.cpp
-    src/engine/controller/controller.cpp
+    src/engine/controller/controller_interface.cpp
 )
 
 target_include_directories(engine PRIVATE   #es private para que quien incluya a engine no "herede" el directorio
     $ENV{MUJOCO_INCLUDE}
+    src/engine
+    src/engine/view
+    src/engine/controller
 )
 
 

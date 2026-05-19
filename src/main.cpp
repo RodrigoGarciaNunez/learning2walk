@@ -12,8 +12,6 @@ using std::make_shared;
 int main() {
     unique_ptr<mujoco_engine> me = make_unique<mujoco_engine>();
     me->start_engine();
-    //me->set_mujoco_visualization();
-    //me->start_rendering_cicle();
     me->clean_engine_up();
     return 0;
 } 

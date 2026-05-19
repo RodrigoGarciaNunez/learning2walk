@@ -13,19 +13,21 @@ struct GLFWwindow_Deleter{
 };
 
 using GLFWwindow_SP= unique_ptr<GLFWwindow, GLFWwindow_Deleter>;
-
-class mujoco_engine;
 struct mujoco_view_data_;
+
+struct mjModel_;
+struct mjData_;
 
 class mujoco_view{
 public:
 
-    mujoco_view();
+    mujoco_view(mjModel_*  m, mjData_*  d);
     virtual ~mujoco_view();
+    int start_window_context();
     int start_rendering_cicle();
     int clean_engine_view();
-
-
+    
+    
 
 
 private:
@@ -33,8 +35,10 @@ private:
     GLFWwindow_SP make_window();
 
     unique_ptr<mujoco_view_data_> mujoco_view_data;
-
-    unique_ptr<mujoco_engine> engine;
+    
+    mjModel_* model;
+    mjData_* data;
+    GLFWwindow_SP window;
 
 
 };

@@ -1,5 +1,7 @@
 #include "mujoco_view.h"
 
+#include "mujoco_engine.h"
+
 #include <GLFW/glfw3.h>
 #include <mujoco/mujoco.h>
 
@@ -12,29 +14,45 @@ struct mujoco_view_data_{
 };
 
 
-mujoco_view::mujoco_view(){
+mujoco_view::mujoco_view(mjModel_*  m, mjData_*  d):
+                                    model(m), data(d){
 
     mujoco_view_data = make_unique<mujoco_view_data_>(); 
+   
+}
 
-    
-    mjv_defaultCamera(&(mujoco_view_data->cam));
+mujoco_view::~mujoco_view(){}
+
+int mujoco_view::start_window_context(){
+
+    if (!glfwInit()) {
+        return 1;
+    }
+
+    window = make_window();
+
+    glfwMakeContextCurrent(window.get());
+
+
+     mjv_defaultCamera(&(mujoco_view_data->cam));
     mjv_defaultOption(&(mujoco_view_data->opt));
 
     mjv_defaultScene(&(mujoco_view_data->scn));
     mjr_defaultContext(&(mujoco_view_data->con));
 
-    mjv_makeScene(m.get(), &(mujoco_view_data->scn), 2000);
-    mjr_makeContext(m.get(), &(mujoco_view_data->con), mjFONTSCALE_150);
-}
+    mjv_makeScene(model, &(mujoco_view_data->scn), 2000);
+    mjr_makeContext(model, &(mujoco_view_data->con), mjFONTSCALE_150);
 
-virtual mujoco_view::~mujoco_view(){}
+
+    return 0;
+}
 
 
 int mujoco_view::start_rendering_cicle(){
     
     while (!glfwWindowShouldClose(window.get())) {
 
-        mj_step(m.get(), d.get());
+        mj_step(model, data);
 
         mjrRect viewport =
         {
@@ -45,8 +63,8 @@ int mujoco_view::start_rendering_cicle(){
         };
 
         mjv_updateScene(
-            m.get(),
-            d.get(),
+            model,
+            data,
             &(mujoco_view_data->opt),
             NULL,
             &(mujoco_view_data->cam),
@@ -69,6 +87,8 @@ int mujoco_view::clean_engine_view(){
     mjr_freeContext(&(mujoco_view_data->con));
 
     glfwTerminate();
+
+    return 0;
 }
 
 
