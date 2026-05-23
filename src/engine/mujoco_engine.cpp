@@ -21,9 +21,16 @@ mujoco_engine::mujoco_engine(){
     }
     d = make_Data();
 
-    mujoco_view_= make_unique<mujoco_view>(m.get(), d.get());
+    
     mujoco_controller_interface = make_unique<controller_interface>(m.get(), d.get());
 
+    //mujoco_controller_interface->py_thread = mujoco_controller_interface->create_thread_SP();
+
+    mujoco_view_= make_unique<mujoco_view>(m.get(), d.get(),  [&](){
+                                                                mujoco_controller_interface->simulation_step();
+                                                                    });
+
+                                                                    
 }
 
 mujoco_engine::~mujoco_engine(){}

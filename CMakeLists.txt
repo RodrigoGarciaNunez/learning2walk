@@ -20,6 +20,7 @@ target_include_directories(engine PRIVATE   #es private para que quien incluya a
     src/engine
     src/engine/view
     src/engine/controller
+    #/usr/include/python3.14
 )
 
 
@@ -30,12 +31,19 @@ find_library(MUJOCO_LIB
 
 find_package(glfw3 REQUIRED)
 
+set(Python3_EXECUTABLE ${PYTHON_VENV_EXEC})
 
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+
+message(STATUS ${Python3_EXECUTABLE})
+message(STATUS ${Python3_INCLUDE_DIRS})
+message(STATUS ${Python3_LIBRARIES})
 
 
 target_link_libraries(engine PRIVATE
     glfw
     ${MUJOCO_LIB}
+    Python3::Python
     #engine_view
     #engine_controller
 )

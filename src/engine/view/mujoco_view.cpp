@@ -14,8 +14,8 @@ struct mujoco_view_data_{
 };
 
 
-mujoco_view::mujoco_view(mjModel_*  m, mjData_*  d):
-                                    model(m), data(d){
+mujoco_view::mujoco_view(mjModel_*  m, mjData_*  d, function<void()> step_call):
+                                    model(m), data(d), step_callback(step_call){
 
     mujoco_view_data = make_unique<mujoco_view_data_>(); 
    
@@ -52,7 +52,8 @@ int mujoco_view::start_rendering_cicle(){
     
     while (!glfwWindowShouldClose(window.get())) {
 
-        mj_step(model, data);
+        step_callback();
+
 
         mjrRect viewport =
         {
