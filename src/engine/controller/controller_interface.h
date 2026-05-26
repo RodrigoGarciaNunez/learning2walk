@@ -38,7 +38,6 @@ public:
 
     controller_interface(mjModel_ * m, mjData_ * d);
     virtual ~controller_interface();
-    thread_SP create_thread_SP();
     void simulation_step();
     
     thread_SP py_thread;  
@@ -47,10 +46,10 @@ private:
 
     int map_actuators();
     int get_actuators_torque();  //en esta se debe tener la api para el modelo de python
+       
+    thread_SP create_thread_SP();
     
-    int hola();
-   
-
+    
     mjModel_ * model;
     mjData_ * data;    
 
@@ -59,11 +58,15 @@ private:
 
     ///// Python ///////
 
+
+
+    
+
    //este hilo se encarga de soportar el python listener
 
-    const char * script_path= "../src/scripts/actions_server.py";
+    // const char * script_path= "../src/scripts/actions_server.py";
     
-    struct Pyimp;                   // pointer to implementation
-    unique_ptr<Pyimp> py_imp;
+    // // struct Pyimp;                   // pointer to implementation
+    // // unique_ptr<Pyimp> py_imp;
 
 };

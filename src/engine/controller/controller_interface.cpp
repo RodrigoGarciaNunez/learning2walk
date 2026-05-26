@@ -1,20 +1,22 @@
 #include "controller_interface.h"
 #include "mujoco_engine.h"
 
+#include <pybind11/pybind11.h>
+
 #include <iostream>
 
 #include <mujoco/mujoco.h>
 
-#include <Python.h>
+//#include <Python.h>
 
 using std::make_unique;
 using std::cerr;
 
-struct controller_interface::Pyimp
-{
-    PyStatus status;
-    PyConfig config;
-};
+// struct controller_interface::Pyimp
+// {
+//     PyStatus status;
+//     PyConfig config;
+// };
 
 controller_interface::controller_interface(mjModel_ *m, mjData_ *d) : model(m), data(d)
 {
@@ -90,61 +92,60 @@ void controller_interface::simulation_step()
 
 int controller_interface::get_actuators_torque()
 {
+    while(true){
 
-    py_imp = make_unique<Pyimp>();
+    }
+
+    return 0;
+}
+
+
+// int controller_interface::get_actuators_torque()
+// {
+
+//     py_imp = make_unique<Pyimp>();
     
-    unique_ptr<FILE> file(fopen(script_path, "r"));
+//     unique_ptr<FILE> file(fopen(script_path, "r"));
 
-    if (file == nullptr)
-    {
+//     if (file == nullptr)
+//     {
 
-        cerr << "No se pudo abrir el script\n";
-        return -1;
-    }
+//         cerr << "No se pudo abrir el script\n";
+//         return -1;
+//     }
 
-    PyConfig_InitPythonConfig(&(py_imp->config));
-    py_imp->status = PyConfig_SetBytesString(&(py_imp->config), &(py_imp->config).program_name, script_path);
-    if (PyStatus_Exception(py_imp->status))
-    {
-        goto exception;
-    }
-    py_imp->status = Py_InitializeFromConfig(&(py_imp->config));
-    if (PyStatus_Exception(py_imp->status))
-    {
-        goto exception;
-    }
-    PyConfig_Clear(&(py_imp->config));
+//     PyConfig_InitPythonConfig(&(py_imp->config));
+//     py_imp->status = PyConfig_SetBytesString(&(py_imp->config), &(py_imp->config).program_name, script_path);
+//     if (PyStatus_Exception(py_imp->status))
+//     {
+//         goto exception;
+//     }
+//     py_imp->status = Py_InitializeFromConfig(&(py_imp->config));
+//     if (PyStatus_Exception(py_imp->status))
+//     {
+//         goto exception;
+//     }
+//     PyConfig_Clear(&(py_imp->config));
 
-    PyRun_SimpleFile(
-        file.get(),
-        script_path);
-
-
-    // PyRun_SimpleString(
-    //     "import sys\n"
-    //     "from time import time,ctime\n"
-    //     "print('Today is', ctime(time()))\n"
-    //     "print('version:', sys.version)\n");
-
-    if (Py_FinalizeEx() < 0)
-    {
-        exit(120);
-    }
-    return 0;
-
-exception:
-    PyConfig_Clear(&(py_imp->config));
-    Py_ExitStatusException(py_imp->status);
-
-    return 0;
-}
+//     PyRun_SimpleFile(
+//         file.get(),
+//         script_path);
 
 
 
-int controller_interface::hola(){
-    cerr <<"hola \n";
-    return 0;
-}
+//     if (Py_FinalizeEx() < 0)
+//     {
+//         exit(120);
+//     }
+//     return 0;
+
+// exception:
+//     PyConfig_Clear(&(py_imp->config));
+//     Py_ExitStatusException(py_imp->status);
+
+//     return 0;
+// }
+
 
 thread_SP controller_interface::create_thread_SP(){
     thread * t = new thread(&controller_interface::get_actuators_torque, this);
