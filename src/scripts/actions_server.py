@@ -4,12 +4,13 @@
 
 
 import sys
-
-def wait_model_state():
-    pass
-
+import time
 
 
 if __name__ == "__main__":
-    while(True):
+    
+    for i in range (0,10):
         print("hola ", sys.version)
+        print(example.i)
+        print(example.j)
+        time.sleep(5)
