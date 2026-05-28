@@ -6,21 +6,24 @@
 #include <utility>
 #include <memory>
 #include <thread>
+#include <vector>
+#include <cstring>
 
 #define PY_SSIZE_T_CLEAN
+#define NUM_JOINTS 21
 
 using std::string;
 using std::unordered_map;
 using std::unique_ptr;
 using std::thread;
+using std::array;
+using std::vector;
+using std::memset;
+
 
 struct mjModel_;
 struct mjData_;
 
-struct mj_MD;
-struct example;
-// struct PyStatus; Son NO opacos, por lo que no se les puede hacer forward declaration tradicional
-// struct PyConfig;
 
 struct actuator_{
     int id=-1;
@@ -32,6 +35,14 @@ struct thread_deleter{
 };
 
 using thread_SP = unique_ptr<thread , thread_deleter>;
+
+
+
+struct model_input;
+
+struct model_output;
+
+
 
 
 class controller_interface{
@@ -47,17 +58,18 @@ private:
 
     int map_actuators();
     int get_actuators_torque();  //en esta se debe tener la api para el modelo de python
+
+    int init_model_IO();
        
     thread_SP create_thread_SP();
     
     
-    // mjModel_ * model;
-    // mjData_ * data;
+    mjModel_ * model;
+    mjData_ * data;
     
-    unique_ptr<mj_MD> mujoco_MD;
-    unique_ptr<example> ex;
-
+    //unique_ptr<mj_model_IO> mujoco_IO;
     unordered_map<string, actuator_> actuators_map;
+    int num_actuators;
 
 
     ///// Python ///////
@@ -66,5 +78,12 @@ private:
 
     thread_SP py_thread;  
     const char * script_path= "../src/scripts/actions_server.py";
+
+
+   unique_ptr<model_input> m_input;
+   unique_ptr<model_output> m_output;
+    
+
+
     
 };

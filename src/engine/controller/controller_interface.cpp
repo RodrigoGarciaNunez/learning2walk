@@ -3,6 +3,7 @@
 
 #include <pybind11/embed.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 #include <iostream>
 
@@ -11,55 +12,84 @@
 using std::cerr;
 using std::make_unique;
 
+// pybind utils
 
-//pybind utils
-
-using pybind11::mod_gil_not_used;
 using pybind11::class_;
-using pybind11::scoped_interpreter;
-using pybind11::object;
 using pybind11::eval_file;
+using pybind11::init;
+using pybind11::mod_gil_not_used;
 using pybind11::module_;
+using pybind11::object;
+using pybind11::scoped_interpreter;
 
+struct model_input
+{
+    model_input(mjData_ *d)
+    {
 
+        // quaternion
+        for (int i = 0; i < 4; i++)
+            torso_quat[i] = d->qpos[3 + i];
 
-struct mj_MD{
-    mj_MD(mjModel_ * m, mjData_ * d):  model(m), data(d){}
-    struct mjModel_ * model;
-    struct mjData_  * data;
-};
+        // base linear vel
+        for (int i = 0; i < 3; i++)
+            torso_linear_vel[i] = d->qvel[i];
 
-// // preliminar
-//  PYBIND11_MODULE(mj_DATA, m, mod_gil_not_used()){
-//     class_<mj_MD>(m, "mujoco_info")
-//         .def_readwrite("model", &mj_MD::model)
-//         .def_readwrite("data", &mj_MD::data);
-//     }
-    
+        // base angular vel
+        for (int i = 0; i < 3; i++)
+            torso_angular_vel[i] = d->qvel[3 + i];
 
-
-
-struct example{
-    example(int i=0, int j=1): i(i), j(j) {}
-    int i;
-    int j;
-};
-
-
- PYBIND11_EMBEDDED_MODULE(module_example, m){
-    class_<example>(m, "example_")
-        .def(pybind11::init<>())
-        .def_readwrite("i", &example::i)
-        .def_readwrite("j", &example::j);
+        // joints
+        for (int i = 0; i < NUM_JOINTS; i++)
+        {
+            joint_pos[i] = d->qpos[7 + i];
+            joint_vel[i] = d->qvel[6 + i];
+        }
     }
-    
 
+    array<float, NUM_JOINTS> joint_pos;
+    array<float, NUM_JOINTS> joint_vel;
 
-controller_interface::controller_interface(mjModel_ *m, mjData_ *d) //: model(m), data(d)
+    array<float, 4> torso_quat;
+
+    array<float, 3> torso_linear_vel;
+    array<float, 3> torso_angular_vel;
+
+    bool left_foot_contact;
+    bool right_foot_contact;
+};
+
+struct model_output
+{
+    model_output()
+    {
+        memset(&torque, 0, sizeof(torque));
+    }
+
+    array<float, 21> torque;
+};
+
+PYBIND11_EMBEDDED_MODULE(model_IO, m)
+{
+    class_<model_input>(m, "mujoco_model_IO")
+        .def_readwrite("joint_pos", &model_input::joint_pos)
+        .def_readwrite("joint_vel", &model_input::joint_vel)
+        .def_readwrite("joint_vel", &model_input::joint_vel)
+        .def_readwrite("torso_quat", &model_input::torso_quat)
+        .def_readwrite("torso_linear_vel", &model_input::torso_linear_vel)
+        .def_readwrite("torso_angular_vel", &model_input::torso_angular_vel)
+        .def_readwrite("left_foot_contact", &model_input::left_foot_contact)
+        .def_readwrite("right_foot_contact", &model_input::right_foot_contact);
+
+    class_<model_output>(m, "ModelOutput")
+        .def(init<>())
+        .def_readwrite("torque", &model_output::torque);
+}
+
+controller_interface::controller_interface(mjModel_ *m, mjData_ *d) : model(m), data(d)
 {
 
-    mujoco_MD = make_unique<mj_MD>(m, d);
-    ex = make_unique<example>();
+    // mujoco_MD = make_unique<mj_model_IO>(m, d);
 
     actuators_map = {{"abdomen_z", {}},
                      {"abdomen_y", {}},
@@ -83,13 +113,21 @@ controller_interface::controller_interface(mjModel_ *m, mjData_ *d) //: model(m)
                      {"shoulder2_left", {}},
                      {"elbow_left", {}}};
 
-    //
+    // num_actuators = actuators_map.size();
+    num_actuators = 21;
 
     map_actuators();
+
+    m_input = make_unique<model_input>(d);
+    m_output = make_unique<model_output>();
 
     py_thread = create_thread_SP();
 
     cerr << "construido \n";
+}
+
+controller_interface::~controller_interface()
+{
 }
 
 int controller_interface::map_actuators()
@@ -100,45 +138,46 @@ int controller_interface::map_actuators()
     for (auto &pair : actuators_map)
     {
         aux = pair.first.c_str();
-        pair.second.id = mj_name2id(mujoco_MD->model, mjOBJ_ACTUATOR, aux);
+        pair.second.id = mj_name2id(model, mjOBJ_ACTUATOR, aux);
     }
 
     return 0;
 }
 
-controller_interface::~controller_interface()
+int controller_interface::init_model_IO()
 {
+
+    return 0;
 }
 
 void controller_interface::simulation_step()
 {
 
-    mjtNum simstart = mujoco_MD->data->time;
+    mjtNum simstart = data->time;
 
-    while (mujoco_MD->data->time - simstart < 1.0 / 60.0)
+    while (data->time - simstart < 1.0 / 60.0)
     {
-
-        // get_actuators_torque();
 
         for (auto &pair : actuators_map)
         {
-            mujoco_MD->data->ctrl[pair.second.id] = pair.second.torque;
+            data->ctrl[pair.second.id] = pair.second.torque;
         }
 
-        mj_step(mujoco_MD->model,mujoco_MD->data);
+        mj_step(model, data);
     }
 }
 
 int controller_interface::get_actuators_torque()
 {
-   
+
     scoped_interpreter guard{};
 
-    pybind11::module_::import("module_example");
-    
+    pybind11::module_::import("model_IO");
+
     object scope = module_::import("__main__").attr("__dict__");
 
-    scope["example"] = pybind11::cast(this->ex.get(),  pybind11::return_value_policy::reference);
+    scope["input_mj"] = pybind11::cast(this->m_input.get(), pybind11::return_value_policy::reference);
+    scope["output_mj"] = pybind11::cast(this->m_output.get(), pybind11::return_value_policy::reference);
 
 
     try
@@ -152,50 +191,6 @@ int controller_interface::get_actuators_torque()
     }
     return 0;
 }
-
-// int controller_interface::get_actuators_torque()
-// {
-
-//     py_imp = make_unique<Pyimp>();
-
-//     unique_ptr<FILE> file(fopen(script_path, "r"));
-
-//     if (file == nullptr)
-//     {
-
-//         cerr << "No se pudo abrir el script\n";
-//         return -1;
-//     }
-
-//     PyConfig_InitPythonConfig(&(py_imp->config));
-//     py_imp->status = PyConfig_SetBytesString(&(py_imp->config), &(py_imp->config).program_name, script_path);
-//     if (PyStatus_Exception(py_imp->status))
-//     {
-//         goto exception;
-//     }
-//     py_imp->status = Py_InitializeFromConfig(&(py_imp->config));
-//     if (PyStatus_Exception(py_imp->status))
-//     {
-//         goto exception;
-//     }
-//     PyConfig_Clear(&(py_imp->config));
-
-//     PyRun_SimpleFile(
-//         file.get(),
-//         script_path);
-
-//     if (Py_FinalizeEx() < 0)
-//     {
-//         exit(120);
-//     }
-//     return 0;
-
-// exception:
-//     PyConfig_Clear(&(py_imp->config));
-//     Py_ExitStatusException(py_imp->status);
-
-//     return 0;
-// }
 
 thread_SP controller_interface::create_thread_SP()
 {
