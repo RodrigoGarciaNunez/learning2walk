@@ -43,8 +43,6 @@ struct model_input;
 struct model_output;
 
 
-
-
 class controller_interface{
 public:
 
@@ -58,8 +56,6 @@ private:
 
     int map_actuators();
     int get_actuators_torque();  //en esta se debe tener la api para el modelo de python
-
-    int init_model_IO();
        
     thread_SP create_thread_SP();
     

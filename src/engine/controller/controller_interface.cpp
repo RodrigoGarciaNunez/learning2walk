@@ -26,7 +26,10 @@ struct model_input
 {
     model_input(mjData_ *d)
     {
+        model_input_update(d);
+    }
 
+    int model_input_update(mjData_ * d){
         // quaternion
         for (int i = 0; i < 4; i++)
             torso_quat[i] = d->qpos[3 + i];
@@ -45,6 +48,8 @@ struct model_input
             joint_pos[i] = d->qpos[7 + i];
             joint_vel[i] = d->qvel[6 + i];
         }
+
+        return 0;
     }
 
     array<float, NUM_JOINTS> joint_pos;
@@ -123,7 +128,6 @@ controller_interface::controller_interface(mjModel_ *m, mjData_ *d) : model(m), 
 
     py_thread = create_thread_SP();
 
-    cerr << "construido \n";
 }
 
 controller_interface::~controller_interface()
@@ -144,23 +148,22 @@ int controller_interface::map_actuators()
     return 0;
 }
 
-int controller_interface::init_model_IO()
-{
 
-    return 0;
-}
 
 void controller_interface::simulation_step()
 {
 
     mjtNum simstart = data->time;
 
+    m_input->model_input_update(data);
+    //cerr << "debo coincidir con el 0 de PY"<<m_output->torque[0] << "\n";
+
     while (data->time - simstart < 1.0 / 60.0)
     {
 
         for (auto &pair : actuators_map)
         {
-            data->ctrl[pair.second.id] = pair.second.torque;
+            data->ctrl[pair.second.id] = m_output->torque[pair.second.id];
         }
 
         mj_step(model, data);
@@ -195,7 +198,7 @@ int controller_interface::get_actuators_torque()
 thread_SP controller_interface::create_thread_SP()
 {
     thread *t = new thread(&controller_interface::get_actuators_torque, this);
-    cerr << "voy bien \n";
+    //cerr << "voy bien \n";
 
     return thread_SP(t, thread_deleter{});
 }
