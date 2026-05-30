@@ -1,3 +1,5 @@
+import random as rd
+
 # import tensorflow as tf
 # #from tensorflow.keras import layers
 # #from tensorflow.keras import Model
@@ -32,11 +34,11 @@
 #     return model
 
 
+#random_list = [rd.uniform(0, 1) for _ in range(10)]
+
+def return_output(output: list):
+    output = [rd.uniform(0, 1) for _ in range(10)]
+
 if __name__ == "__main__":
-    import sys
-    from time import time,ctime
-    
-    print('Today is', ctime(time()))
-    print('executable:', sys.executable)
-    print('version', sys.version)
+    return_output()
 

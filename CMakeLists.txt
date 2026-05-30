@@ -35,6 +35,8 @@ set(Python3_EXECUTABLE ${PYTHON_VENV_EXEC})
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 
+find_package(pybind11 REQUIRED)
+
 message(STATUS ${Python3_EXECUTABLE})
 message(STATUS ${Python3_INCLUDE_DIRS})
 message(STATUS ${Python3_LIBRARIES})
@@ -44,6 +46,7 @@ target_link_libraries(engine PRIVATE
     glfw
     ${MUJOCO_LIB}
     Python3::Python
+    pybind11::embed;
     #engine_view
     #engine_controller
 )

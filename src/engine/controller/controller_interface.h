@@ -6,25 +6,29 @@
 #include <utility>
 #include <memory>
 #include <thread>
+#include <vector>
+#include <cstring>
 
 #define PY_SSIZE_T_CLEAN
+#define NUM_JOINTS 21
 
 using std::string;
 using std::unordered_map;
 using std::unique_ptr;
 using std::thread;
+using std::array;
+using std::vector;
+using std::memset;
+
 
 struct mjModel_;
 struct mjData_;
 
-// struct PyStatus; Son NO opacos, por lo que no se les puede hacer forward declaration tradicional
-// struct PyConfig;
 
 struct actuator_{
     int id=-1;
     int torque=1.0;
 };
-
 
 struct thread_deleter{
     void operator()(thread * t);
@@ -33,37 +37,49 @@ struct thread_deleter{
 using thread_SP = unique_ptr<thread , thread_deleter>;
 
 
+
+struct model_input;
+
+struct model_output;
+
+
 class controller_interface{
 public:
 
     controller_interface(mjModel_ * m, mjData_ * d);
     virtual ~controller_interface();
-    thread_SP create_thread_SP();
     void simulation_step();
     
-    thread_SP py_thread;  
+    
 
 private:
 
     int map_actuators();
     int get_actuators_torque();  //en esta se debe tener la api para el modelo de python
+       
+    thread_SP create_thread_SP();
     
-    int hola();
-   
-
+    
     mjModel_ * model;
-    mjData_ * data;    
-
+    mjData_ * data;
+    
+    //unique_ptr<mj_model_IO> mujoco_IO;
     unordered_map<string, actuator_> actuators_map;
+    int num_actuators;
 
 
     ///// Python ///////
 
    //este hilo se encarga de soportar el python listener
 
+    thread_SP py_thread;  
     const char * script_path= "../src/scripts/actions_server.py";
-    
-    struct Pyimp;                   // pointer to implementation
-    unique_ptr<Pyimp> py_imp;
 
+
+   unique_ptr<model_input> m_input;
+   unique_ptr<model_output> m_output;
+    
+
+
+    
 };

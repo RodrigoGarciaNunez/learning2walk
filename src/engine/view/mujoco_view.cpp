@@ -34,7 +34,10 @@ int mujoco_view::start_window_context(){
     glfwMakeContextCurrent(window.get());
 
 
-     mjv_defaultCamera(&(mujoco_view_data->cam));
+    mjv_defaultCamera(&(mujoco_view_data->cam));
+    mujoco_view_data->cam.type = mjCAMERA_TRACKING;
+    mujoco_view_data->cam.trackbodyid = mj_name2id(model, mjOBJ_BODY, "torso");
+   // mjv_camera
     mjv_defaultOption(&(mujoco_view_data->opt));
 
     mjv_defaultScene(&(mujoco_view_data->scn));
