@@ -52,19 +52,18 @@ int mujoco_view::start_window_context(){
 
 
 int mujoco_view::start_rendering_cicle(){
-    
-    while (!glfwWindowShouldClose(window.get())) {
 
-        step_callback();
-
-
-        mjrRect viewport =
+    mjrRect viewport =
         {
             0,
             0,
             1200,
             900
         };
+    
+    while (!glfwWindowShouldClose(window.get())) {
+
+        step_callback();
 
         mjv_updateScene(
             model,
@@ -108,6 +107,10 @@ GLFWwindow_SP mujoco_view::make_window(){
             NULL,
             NULL
         );
+   
+    if (!raw) {
+        exit(EXIT_FAILURE);
+    }
 
     return GLFWwindow_SP(raw, GLFWwindow_Deleter{});
 }

@@ -29,6 +29,8 @@ class mujoco_view;
 class controller_interface;
 
 
+#define ERROR_SZ 1000
+
 class mujoco_engine{
 public:
     mujoco_engine();
@@ -40,6 +42,7 @@ public:
 
 private:
 
+    char error[ERROR_SZ];
 
     mjModel_SP make_Model(const char* path);
     mjData_SP make_Data();

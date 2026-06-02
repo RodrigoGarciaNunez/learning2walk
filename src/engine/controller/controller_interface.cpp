@@ -49,9 +49,7 @@ controller_interface::controller_interface(mjModel_ *m, mjData_ *d) : model(m), 
                      {"shoulder1_left", {}},
                      {"shoulder2_left", {}},
                      {"elbow_left", {}}};
-
-    num_actuators = 21;
-
+                     
     map_actuators();
 
     m_input = make_unique<model_input>(d);
