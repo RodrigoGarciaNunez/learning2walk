@@ -8,6 +8,7 @@
 #include <thread>
 #include <vector>
 #include <cstring>
+#include <mutex>
 
 #define PY_SSIZE_T_CLEAN
 #define NUM_JOINTS 21
@@ -19,7 +20,9 @@ using std::thread;
 using std::array;
 using std::vector;
 using std::memset;
-
+using std::mutex;
+using std::unique_lock;
+using std::lock_guard;
 
 struct mjModel_;
 struct mjData_;
@@ -38,10 +41,11 @@ using thread_SP = unique_ptr<thread , thread_deleter>;
 
 
 
-struct model_input;
+struct  model_input;
+using model_input_ = unique_ptr<model_input>;
 
-struct model_output;
-
+struct  model_output;
+using model_output_ =unique_ptr<model_output>;
 
 class controller_interface{
 public:
@@ -55,7 +59,7 @@ public:
 private:
 
     int map_actuators();
-    int get_actuators_torque();  //en esta se debe tener la api para el modelo de python
+    int get_actuators_torque();  //levanta el scope de python
        
     thread_SP create_thread_SP();
     
@@ -63,8 +67,7 @@ private:
     mjModel_ * model;
     mjData_ * data;
     
-    //unique_ptr<mj_model_IO> mujoco_IO;
-    unordered_map<string, actuator_> actuators_map;
+    unordered_map<const char *, actuator_> actuators_map;
     int num_actuators;
 
 
@@ -76,8 +79,11 @@ private:
     const char * script_path= "../src/scripts/actions_server.py";
 
 
-   unique_ptr<model_input> m_input;
-   unique_ptr<model_output> m_output;
+   model_input_ m_input;
+   model_output_ m_output;
+
+    mutex mutex_;
+    unique_ptr<unique_lock<mutex>> model_data_locker;
     
 
 

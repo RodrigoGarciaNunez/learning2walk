@@ -12,6 +12,7 @@ add_executable(main src/main.cpp)
 add_library(engine
     src/engine/mujoco_engine.cpp
     src/engine/view/mujoco_view.cpp
+    src/engine/controller/model_IO.cpp
     src/engine/controller/controller_interface.cpp
 )
 

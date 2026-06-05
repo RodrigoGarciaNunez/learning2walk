@@ -10,9 +10,9 @@ using std::shared_ptr;
 using std::make_shared;
 
 int main() {
-    unique_ptr<mujoco_engine> me = make_unique<mujoco_engine>();
-    me->start_engine();
-    me->clean_engine_up();
+    mujoco_engine me;
+    me.start_engine();
+    me.clean_engine_up();
     return 0;
 } 
 

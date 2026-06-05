@@ -8,17 +8,17 @@
 
 
 #include <iostream>
+#include <cstdlib>
+
+using std::cerr;
+using std::endl;
+using std::exit;
 
 mujoco_engine::mujoco_engine(){
 
-    char error[1000];
 
     m = make_Model("../src/models/humanoid.xml");
 
-    if (!m.get()) {
-        std::cout << error << std::endl;
-        return;
-    }
     d = make_Data();
 
     
@@ -47,7 +47,7 @@ int mujoco_engine::start_engine(){
 
 
 int mujoco_engine::clean_engine_up(){ 
-    // mj_deleteData(d.get());  como tienen su smart pointer, me salo esto
+    // mj_deleteData(d.get());  como tienen su smart pointer, me salto esto
     // mj_deleteModel(m.get());
 
     mujoco_view_->clean_engine_view();
@@ -57,17 +57,18 @@ int mujoco_engine::clean_engine_up(){
 
 
 
-// deleters //////77777777//////////////////////////777
-
-
 mjModel_SP mujoco_engine::make_Model(const char* path){
     
     mjModel * raw =
-        mj_loadXML(path, nullptr, nullptr, 0);
+        mj_loadXML(path, nullptr, error, ERROR_SZ);
 
-    return mjModel_SP(
-        raw,
-        mjModel_Deleter{});
+    if (!raw) {
+        cerr << error << endl;
+        exit(EXIT_FAILURE);
+    }
+    
+
+    return mjModel_SP(raw, mjModel_Deleter{}) ;
 }
 
 
@@ -76,11 +77,17 @@ mjData_SP mujoco_engine::make_Data(){
     
     mjData * raw = mj_makeData(m.get());
 
+    if (!raw) {
+        cerr << error << endl;
+        exit(EXIT_FAILURE);
+    }
+
     return mjData_SP(
         raw, 
         mjData_Deleter{});
 }
 
+// deleters //////77777777//////////////////////////777
 
 
 
