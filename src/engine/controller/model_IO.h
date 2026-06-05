@@ -1,17 +1,23 @@
 #pragma once
 
 #include <array>
+#include <unordered_map>
+#include <string>
+
 
 using std::array;
+using std::unordered_map;
+using std::string;
 
 #define NUM_JOINTS 21
 
 struct mjData_;
+struct mjModel_;
 
 struct model_input{
 
 public:
-    model_input(mjData_ *data);
+    model_input(mjData_ *data, mjModel_ *model);
     int model_input_update();
 
 
@@ -24,12 +30,15 @@ public:
     array<float, 3> torso_linear_vel;
     array<float, 3> torso_angular_vel;
 
-    bool left_foot_contact;
-    bool right_foot_contact;
+    int left_foot_contact;
+    int right_foot_contact;
 
 private:
 
+    unordered_map<int, const char *> foots_dict;
+
     mjData_ *d;
+    mjModel_ *m;
 };
 
 struct model_output{

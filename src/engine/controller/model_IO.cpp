@@ -10,12 +10,33 @@
 
 using std::array;
 using std::memset;
+using std::strstr;
+using std::iterator;
 
 using pybind11::class_;
 using pybind11::init;
 
-model_input::model_input(mjData_ *data):d(data)
+model_input::model_input(mjData_ *data, mjModel_ *model) : d(data), m(model)
 {
+
+    unordered_map<const char *, int> foots_dict_pre_map = {{"foot1_right", 0},
+                  {"foot2_right", 0},
+                  {"foot1_left", 0},
+                  {"foot2_left", 0}};
+
+    for (auto &pair : foots_dict_pre_map)
+    {
+        pair.second = mj_name2id(m, mjOBJ_GEOM, pair.first);
+    }
+
+
+    for (const auto& [name, id] : foots_dict_pre_map)
+    {
+        foots_dict[id] = name;
+
+    }
+
+
     model_input_update();
 }
 
@@ -40,9 +61,37 @@ int model_input::model_input_update()
         joint_vel[i] = d->qvel[6 + i];
     }
 
+    // check foots contact
+    right_foot_contact=0;
+    left_foot_contact=0;
+    unordered_map<int, const char *>::iterator it1;
+
+    for (int i = 0; i < d->ncon; ++i)
+    {
+        const mjContact &c = d->contact[i];
+
+        it1 = foots_dict.find(c.geom[0]);
+        if(it1 != foots_dict.end()){
+
+            right_foot_contact = (strstr(it1->second, "right") )? 1: 0;  //hay que refactorizar esto, estar buscando a cada rato un substring no es lo mejor
+            left_foot_contact = (strstr(it1->second, "left")  )? 1: 0;
+        }
+        
+
+        it1 = foots_dict.find(c.geom[1]);
+        if(it1 != foots_dict.end()){
+            right_foot_contact = (right_foot_contact || strstr(it1->second, "right") )? 1: 0;
+            left_foot_contact = (left_foot_contact || strstr(it1->second, "left") )? 1: 0;
+
+        }
+
+        if (right_foot_contact && left_foot_contact){
+            break;
+        }      
+    }
+
     return 0;
 }
-
 
 model_output::model_output()
 {

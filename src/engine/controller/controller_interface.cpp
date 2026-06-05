@@ -14,6 +14,8 @@
 using std::cerr;
 using std::make_unique;
 
+using std::defer_lock;
+
 // pybind utils
 
 using pybind11::eval_file;
@@ -52,8 +54,10 @@ controller_interface::controller_interface(mjModel_ *m, mjData_ *d) : model(m), 
                      
     map_actuators();
 
-    m_input = make_unique<model_input>(d);
+    m_input = make_unique<model_input>(data, model);
     m_output = make_unique<model_output>();
+
+    //model_data_locker = make_unique<unique_lock<mutex>>(mutex_, defer_lock);
 
     py_thread = create_thread_SP();
 
@@ -66,12 +70,10 @@ controller_interface::~controller_interface()
 int controller_interface::map_actuators()
 {
 
-    const char *aux;
-
     for (auto &pair : actuators_map)
     {
-        aux = pair.first.c_str();
-        pair.second.id = mj_name2id(model, mjOBJ_ACTUATOR, aux);
+
+        pair.second.id = mj_name2id(model, mjOBJ_ACTUATOR, pair.first);
     }
 
     return 0;
@@ -81,16 +83,18 @@ int controller_interface::map_actuators()
 
 void controller_interface::simulation_step()
 {
-
     mjtNum simstart = data->time;
 
+    //model_data_locker->lock();
     m_input->model_input_update();
-
+    //model_data_locker->unlock();
+    
     while (data->time - simstart < 1.0 / 60.0)
     {
 
         for (auto &pair : actuators_map)
         {
+            //
             data->ctrl[pair.second.id] = m_output->torque[pair.second.id];
         }
 

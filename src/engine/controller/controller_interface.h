@@ -8,6 +8,7 @@
 #include <thread>
 #include <vector>
 #include <cstring>
+#include <mutex>
 
 #define PY_SSIZE_T_CLEAN
 #define NUM_JOINTS 21
@@ -19,7 +20,9 @@ using std::thread;
 using std::array;
 using std::vector;
 using std::memset;
-
+using std::mutex;
+using std::unique_lock;
+using std::lock_guard;
 
 struct mjModel_;
 struct mjData_;
@@ -64,7 +67,7 @@ private:
     mjModel_ * model;
     mjData_ * data;
     
-    unordered_map<string, actuator_> actuators_map;
+    unordered_map<const char *, actuator_> actuators_map;
     int num_actuators;
 
 
@@ -78,6 +81,9 @@ private:
 
    model_input_ m_input;
    model_output_ m_output;
+
+    mutex mutex_;
+    unique_ptr<unique_lock<mutex>> model_data_locker;
     
 
 
